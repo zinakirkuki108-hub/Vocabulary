@@ -1,0 +1,8 @@
+{
+  "name": "مفرداتي - قاموس الكلمات السريع",
+  "description": "تطبيق تعليمي بسيط للبحث الفوري عن الكلمات ومعانيها باللغة العربية والإنجليزية مع النطق الصوتي المباشر.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

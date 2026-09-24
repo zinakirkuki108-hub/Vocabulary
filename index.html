@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer">
+  <title>مفرداتي - قاموس الكلمات السريع والناطق</title>
+  <meta name="description" content="قاموس شامل وسريع للبحث الفوري عن أي كلمة باللغة الإنجليزية أو العربية مع النطق الصوتي المباشر.">
+  
+  <!-- ResponsiveVoice as resilient multi-platform speech backup -->
+  <script src="https://code.responsivevoice.org/responsivevoice.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Cairo', 'Tajawal', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Cairo', 'Tajawal', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .dark .custom-scroll::-webkit-scrollbar-thumb { background: #334155; }
+    
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .speaking-active {
+      animation: pulse-ring 0.8s infinite ease-in-out;
+      background-color: #059669 !important;
+      color: #ffffff !important;
+    }
+  </style>
+</head>
+<body class="bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 min-h-screen transition-colors duration-200">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-stone-900 dark:text-white flex items-center gap-2">
+            مُفرداتي
+            <span class="text-xs bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">صوت ناطق</span>
+          </h1>
+          <p class="text-xs text-stone-500 dark:text-stone-400">قاموس شامل مع النطق الصوتي الفوري</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button id="speedBtn" onclick="toggleSpeed()" class="px-2.5 py-1.5 rounded-lg border border-stone-200 dark:border-stone-800 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition">
+          <span id="speedLabel">سرعة: 1.0x</span>
+        </button>
+        <button onclick="toggleDarkMode()" class="p-2 rounded-lg border border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition" title="الوضع الليلي">
+          <svg id="themeIconDark" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          <svg id="themeIconLight" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- Search Section -->
+    <div class="space-y-2">
+      <div class="relative flex items-center">
+        <input 
+          id="searchInput"
+          type="text" 
+          placeholder="ابحث عن أي كلمة بالإنجليزية أو بالعربية (مثال: Car, Book, كتاب, مدرسة)..."
+          oninput="handleSearch(this.value)"
+          onkeydown="if(event.key === 'Enter') handleSearchEnter()"
+          class="w-full pl-12 pr-12 py-3.5 bg-white dark:bg-stone-900 border-2 border-stone-200 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:border-emerald-500 shadow-sm transition"
+        >
+        <span class="absolute right-4 text-stone-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </span>
+        <button id="clearSearchBtn" onclick="clearSearch()" class="absolute left-4 text-stone-400 hover:text-stone-600 hidden">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Quick Action for any typed word -->
+      <div id="liveTranslatePrompt" class="hidden">
+        <button onclick="handleSearchEnter()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+          <span id="liveTranslateBtnText">ترجمة ونطق فوري لهذه الكلمة</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Word Card -->
+    <div id="wordCard" class="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-xl shadow-stone-200/40 dark:shadow-none relative overflow-hidden transition-all duration-300">
+      <div class="absolute top-0 right-0 left-0 h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+      
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div class="flex items-center gap-3">
+          <span id="cardEmoji" class="text-4xl sm:text-5xl">📖</span>
+          <div>
+            <span id="cardCategory" class="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 mb-1">
+              التعليم والمدرسة
+            </span>
+            <div id="cardPhonetic" class="text-sm font-mono text-stone-400 dark:text-stone-500 dir-ltr text-right">/bʊk/</div>
+          </div>
+        </div>
+        
+        <button onclick="toggleFavoriteCurrent()" class="p-2.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition text-stone-400 hover:text-amber-500" title="إضافة للمفضلة">
+          <svg id="favIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+        </button>
+      </div>
+
+      <!-- Main Translation Display -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 p-5 bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-100 dark:border-stone-800">
+        <!-- English -->
+        <div class="flex flex-col justify-between space-y-3">
+          <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">الإنجليزية (English)</span>
+          <div class="flex items-center justify-between gap-2">
+            <h2 id="cardEnglish" class="text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white tracking-tight">Book</h2>
+            <button id="englishSpeakBtn" onclick="speakCurrentEnglish()" class="p-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer" title="استمع للنطق">
+              <svg id="englishSpeakerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+              <span class="text-xs font-bold hidden sm:inline">نطق</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Arabic -->
+        <div class="flex flex-col justify-between space-y-3 border-t md:border-t-0 md:border-r border-stone-200 dark:border-stone-700/60 pt-4 md:pt-0 md:pr-6">
+          <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">المعنى بالعربية</span>
+          <div class="flex items-center justify-between">
+            <h2 id="cardArabic" class="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400">كتاب</h2>
+            <button id="arabicSpeakBtn" onclick="speakCurrentArabic()" class="p-3.5 rounded-2xl bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-white active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer" title="نطق بالعربية">
+              <svg id="arabicSpeakerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5L6 9H2v6h4l5 4V5z"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2 pt-2">
+        <button onclick="speakCurrentEnglish(0.75)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-xs font-medium text-stone-700 dark:text-stone-300 transition cursor-pointer">
+          🐢 نطق بطيء (Slow)
+        </button>
+        <button onclick="randomWord()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-xs font-medium text-emerald-700 dark:text-emerald-300 transition mr-auto cursor-pointer">
+          🎲 كلمة عشوائية
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-stone-700 dark:text-stone-300">التصنيفات</h3>
+        <span id="wordCountLabel" class="text-xs text-stone-500">جاري التحضير...</span>
+      </div>
+      <div id="categoriesList" class="flex gap-2 overflow-x-auto pb-2 custom-scroll"></div>
+    </div>
+
+    <!-- Words Grid -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-stone-700 dark:text-stone-300">قائمة المفردات</h3>
+        <span class="text-xs text-stone-400">انقر على أي كلمة لعرضها وسماع نطقها</span>
+      </div>
+      <div id="wordsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5"></div>
+    </div>
+
+    <!-- Favorites & History Tabs -->
+    <div class="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-4">
+      <div class="flex items-center gap-4 border-b border-stone-200 dark:border-stone-800 pb-3">
+        <button id="tabFavsBtn" onclick="switchTab('favorites')" class="font-bold text-sm text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500 pb-1 cursor-pointer">
+          ⭐ المفضلة (<span id="favCount">0</span>)
+        </button>
+        <button id="tabHistBtn" onclick="switchTab('history')" class="font-bold text-sm text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 pb-1 cursor-pointer">
+          🕒 سجل الكلمات
+        </button>
+      </div>
+      <div id="tabContent" class="min-h-[50px] flex flex-wrap gap-2"></div>
+    </div>
+
+  </main>
+
+  <footer class="max-w-3xl mx-auto px-4 py-8 text-center text-xs text-stone-400 space-y-1">
+    <p>مفرداتي - قاموس الكلمات السريع © 2026</p>
+    <p>شامل للبحث الفوري مع النطق الصوتي المباشر</p>
+  </footer>
+
+  <!-- Vocabulary Database & Robust Audio Engine -->
+  <script>
+    const WORDS = [
+      // التعليم والمدرسة
+      { id: 'book', english: 'Book', arabic: 'كتاب', category: 'التعليم والمدرسة', emoji: '📖', phonetic: '/bʊk/' },
+      { id: 'pen', english: 'Pen', arabic: 'قلم', category: 'التعليم والمدرسة', emoji: '🖊️', phonetic: '/pɛn/' },
+      { id: 'pencil', english: 'Pencil', arabic: 'قلم رصاص', category: 'التعليم والمدرسة', emoji: '✏️', phonetic: '/ˈpɛnsəl/' },
+      { id: 'notebook', english: 'Notebook', arabic: 'دفتر', category: 'التعليم والمدرسة', emoji: '📓', phonetic: '/ˈnoʊtbʊk/' },
+      { id: 'school', english: 'School', arabic: 'مدرسة', category: 'التعليم والمدرسة', emoji: '🏫', phonetic: '/skuːl/' },
+      { id: 'university', english: 'University', arabic: 'جامعة', category: 'التعليم والمدرسة', emoji: '🎓', phonetic: '/ˌjuːnɪˈvɜːrsɪti/' },
+      { id: 'teacher', english: 'Teacher', arabic: 'معلم', category: 'التعليم والمدرسة', emoji: '👨‍🏫', phonetic: '/ˈtiːtʃər/' },
+      { id: 'student', english: 'Student', arabic: 'طالب', category: 'التعليم والمدرسة', emoji: '🧑‍🎓', phonetic: '/ˈstjuːdənt/' },
+      { id: 'library', english: 'Library', arabic: 'مكتبة', category: 'التعليم والمدرسة', emoji: '📚', phonetic: '/ˈlaɪbrəri/' },
+      { id: 'exam', english: 'Exam', arabic: 'امتحان', category: 'التعليم والمدرسة', emoji: '✍️', phonetic: '/ɪɡˈzæm/' },
+      { id: 'bag', english: 'Bag', arabic: 'حقيبة', category: 'التعليم والمدرسة', emoji: '🎒', phonetic: '/bæɡ/' },
+      { id: 'lesson', english: 'Lesson', arabic: 'درس', category: 'التعليم والمدرسة', emoji: '📝', phonetic: '/ˈlɛsən/' },
+      { id: 'homework', english: 'Homework', arabic: 'واجب منزلي', category: 'التعليم والمدرسة', emoji: '📋', phonetic: '/ˈhoʊmwɜːrk/' },
+      { id: 'paper', english: 'Paper', arabic: 'ورقة', category: 'التعليم والمدرسة', emoji: '📄', phonetic: '/ˈpeɪpər/' },
+
+      // مواصلات وسفر
+      { id: 'car', english: 'Car', arabic: 'سيارة', category: 'مواصلات وسفر', emoji: '🚗', phonetic: '/kɑːr/' },
+      { id: 'bus', english: 'Bus', arabic: 'حافلة', category: 'مواصلات وسفر', emoji: '🚌', phonetic: '/bʌs/' },
+      { id: 'train', english: 'Train', arabic: 'قطار', category: 'مواصلات وسفر', emoji: '🚆', phonetic: '/treɪn/' },
+      { id: 'airplane', english: 'Airplane', arabic: 'طائرة', category: 'مواصلات وسفر', emoji: '✈️', phonetic: '/ˈɛərpleɪn/' },
+      { id: 'bicycle', english: 'Bicycle', arabic: 'دراجة', category: 'مواصلات وسفر', emoji: '🚲', phonetic: '/ˈbaɪsɪkəl/' },
+      { id: 'ship', english: 'Ship', arabic: 'سفينة', category: 'مواصلات وسفر', emoji: '🚢', phonetic: '/ʃɪp/' },
+      { id: 'boat', english: 'Boat', arabic: 'قارب', category: 'مواصلات وسفر', emoji: '⛵', phonetic: '/boʊt/' },
+      { id: 'airport', english: 'Airport', arabic: 'مطار', category: 'مواصلات وسفر', emoji: '🛫', phonetic: '/ˈɛərpɔːrt/' },
+      { id: 'ticket', english: 'Ticket', arabic: 'تذكرة', category: 'مواصلات وسفر', emoji: '🎟️', phonetic: '/ˈtɪkɪt/' },
+      { id: 'passport', english: 'Passport', arabic: 'جواز سفر', category: 'مواصلات وسفر', emoji: '🛂', phonetic: '/ˈpæspɔːrt/' },
+      { id: 'street', english: 'Street', arabic: 'شارع', category: 'مواصلات وسفر', emoji: '🚦', phonetic: '/striːt/' },
+      { id: 'road', english: 'Road', arabic: 'طريق', category: 'مواصلات وسفر', emoji: '🛣️', phonetic: '/roʊd/' },
+
+      // المنزل والحياة
+      { id: 'house', english: 'House', arabic: 'منزل', category: 'المنزل والحياة', emoji: '🏠', phonetic: '/haʊs/' },
+      { id: 'home', english: 'Home', arabic: 'بيت', category: 'المنزل والحياة', emoji: '🏡', phonetic: '/hoʊm/' },
+      { id: 'door', english: 'Door', arabic: 'باب', category: 'المنزل والحياة', emoji: '🚪', phonetic: '/dɔːr/' },
+      { id: 'window', english: 'Window', arabic: 'نافذة', category: 'المنزل والحياة', emoji: '🪟', phonetic: '/ˈwɪndoʊ/' },
+      { id: 'key', english: 'Key', arabic: 'مفتاح', category: 'المنزل والحياة', emoji: '🔑', phonetic: '/kiː/' },
+      { id: 'table', english: 'Table', arabic: 'طاولة', category: 'المنزل والحياة', emoji: '🪵', phonetic: '/ˈteɪbəl/' },
+      { id: 'chair', english: 'Chair', arabic: 'كرسي', category: 'المنزل والحياة', emoji: '🪑', phonetic: '/tʃɛər/' },
+      { id: 'bed', english: 'Bed', arabic: 'سرير', category: 'المنزل والحياة', emoji: '🛏️', phonetic: '/bɛd/' },
+      { id: 'kitchen', english: 'Kitchen', arabic: 'مطبخ', category: 'المنزل والحياة', emoji: '🍳', phonetic: '/ˈkɪtʃɪn/' },
+      { id: 'room', english: 'Room', arabic: 'غرفة', category: 'المنزل والحياة', emoji: '🚪', phonetic: '/ruːm/' },
+      { id: 'clock', english: 'Clock', arabic: 'ساعة', category: 'المنزل والحياة', emoji: '⏰', phonetic: '/klɒk/' },
+      { id: 'light', english: 'Light', arabic: 'ضوء', category: 'المنزل والحياة', emoji: '💡', phonetic: '/laɪt/' },
+
+      // طعام وشراب
+      { id: 'water', english: 'Water', arabic: 'ماء', category: 'طعام وشراب', emoji: '💧', phonetic: '/ˈwɔːtər/' },
+      { id: 'bread', english: 'Bread', arabic: 'خبز', category: 'طعام وشراب', emoji: '🍞', phonetic: '/brɛd/' },
+      { id: 'milk', english: 'Milk', arabic: 'حليب', category: 'طعام وشراب', emoji: '🥛', phonetic: '/mɪlk/' },
+      { id: 'tea', english: 'Tea', arabic: 'شاي', category: 'طعام وشراب', emoji: '🍵', phonetic: '/tiː/' },
+      { id: 'coffee', english: 'Coffee', arabic: 'قهوة', category: 'طعام وشراب', emoji: '☕', phonetic: '/ˈkɔːfi/' },
+      { id: 'apple', english: 'Apple', arabic: 'تفاحة', category: 'طعام وشراب', emoji: '🍎', phonetic: '/ˈæpəl/' },
+      { id: 'banana', english: 'Banana', arabic: 'موزة', category: 'طعام وشراب', emoji: '🍌', phonetic: '/bəˈnænə/' },
+      { id: 'meat', english: 'Meat', arabic: 'لحم', category: 'طعام وشراب', emoji: '🥩', phonetic: '/miːt/' },
+      { id: 'fish', english: 'Fish', arabic: 'سمك', category: 'طعام وشراب', emoji: '🐟', phonetic: '/fɪʃ/' },
+      { id: 'rice', english: 'Rice', arabic: 'أرز', category: 'طعام وشراب', emoji: '🍚', phonetic: '/raɪs/' },
+      { id: 'egg', english: 'Egg', arabic: 'بيضة', category: 'طعام وشراب', emoji: '🥚', phonetic: '/ɛɡ/' },
+      { id: 'cheese', english: 'Cheese', arabic: 'جبن', category: 'طعام وشراب', emoji: '🧀', phonetic: '/tʃiːz/' },
+      { id: 'sugar', english: 'Sugar', arabic: 'سكر', category: 'طعام وشراب', emoji: '🧂', phonetic: '/ˈʃʊɡər/' },
+
+      // المهن والعمل
+      { id: 'doctor', english: 'Doctor', arabic: 'طبيب', category: 'المهن والعمل', emoji: '👨‍⚕️', phonetic: '/ˈdɒktər/' },
+      { id: 'nurse', english: 'Nurse', arabic: 'ممرضة', category: 'المهن والعمل', emoji: '👩‍⚕️', phonetic: '/nɜːrs/' },
+      { id: 'engineer', english: 'Engineer', arabic: 'مهندس', category: 'المهن والعمل', emoji: '👷', phonetic: '/ˌɛndʒɪˈnɪər/' },
+      { id: 'police', english: 'Police', category: 'المهن والعمل', arabic: 'شرطي', emoji: '👮', phonetic: '/pəˈliːs/' },
+      { id: 'manager', english: 'Manager', arabic: 'مدير', category: 'المهن والعمل', emoji: '💼', phonetic: '/ˈmænɪdʒər/' },
+      { id: 'worker', english: 'Worker', arabic: 'عامل', category: 'المهن والعمل', emoji: '🔨', phonetic: '/ˈwɜːrkər/' },
+      { id: 'job', english: 'Job', arabic: 'وظيفة', category: 'المهن والعمل', emoji: '💼', phonetic: '/dʒɒb/' },
+      { id: 'work', english: 'Work', arabic: 'عمل', category: 'المهن والعمل', emoji: '💼', phonetic: '/wɜːrk/' },
+      { id: 'office', english: 'Office', arabic: 'مكتب', category: 'المهن والعمل', emoji: '🏢', phonetic: '/ˈɒfɪs/' },
+      { id: 'money', english: 'Money', arabic: 'نقود', category: 'المهن والعمل', emoji: '💵', phonetic: '/ˈmʌni/' },
+
+      // تقنية وإنترنت
+      { id: 'computer', english: 'Computer', arabic: 'حاسوب', category: 'تقنية وإنترنت', emoji: '💻', phonetic: '/kəmˈpjuːtər/' },
+      { id: 'phone', english: 'Phone', arabic: 'هاتف', category: 'تقنية وإنترنت', emoji: '📱', phonetic: '/foʊn/' },
+      { id: 'internet', english: 'Internet', arabic: 'إنترنت', category: 'تقنية وإنترنت', emoji: '🌐', phonetic: '/ˈɪntərnɛt/' },
+      { id: 'screen', english: 'Screen', arabic: 'شاشة', category: 'تقنية وإنترنت', emoji: '🖥️', phonetic: '/skriːn/' },
+      { id: 'camera', english: 'Camera', arabic: 'كاميرا', category: 'تقنية وإنترنت', emoji: '📷', phonetic: '/ˈkæmərə/' },
+      { id: 'message', english: 'Message', arabic: 'رسالة', category: 'تقنية وإنترنت', emoji: '💬', phonetic: '/ˈmɛsɪdʒ/' },
+
+      // الطبيعة والحيوانات
+      { id: 'sun', english: 'Sun', arabic: 'شمس', category: 'الطبيعة والحيوانات', emoji: '☀️', phonetic: '/sʌn/' },
+      { id: 'moon', english: 'Moon', arabic: 'قمر', category: 'الطبيعة والحيوانات', emoji: '🌙', phonetic: '/muːn/' },
+      { id: 'rain', english: 'Rain', arabic: 'مطر', category: 'الطبيعة والحيوانات', emoji: '🌧️', phonetic: '/reɪn/' },
+      { id: 'sky', english: 'Sky', arabic: 'سماء', category: 'الطبيعة والحيوانات', emoji: '🌌', phonetic: '/skaɪ/' },
+      { id: 'tree', english: 'Tree', arabic: 'شجرة', category: 'الطبيعة والحيوانات', emoji: '🌳', phonetic: '/triː/' },
+      { id: 'flower', english: 'Flower', arabic: 'زهرة', category: 'الطبيعة والحيوانات', emoji: '🌸', phonetic: '/ˈflaʊər/' },
+      { id: 'sea', english: 'Sea', arabic: 'بحر', category: 'الطبيعة والحيوانات', emoji: '🌊', phonetic: '/siː/' },
+      { id: 'cat', english: 'Cat', arabic: 'قطة', category: 'الطبيعة والحيوانات', emoji: '🐱', phonetic: '/kæt/' },
+      { id: 'dog', english: 'Dog', arabic: 'كلب', category: 'الطبيعة والحيوانات', emoji: '🐶', phonetic: '/dɒɡ/' },
+      { id: 'bird', english: 'Bird', arabic: 'عصفور', category: 'الطبيعة والحيوانات', emoji: '🐦', phonetic: '/bɜːrd/' },
+      { id: 'horse', english: 'Horse', arabic: 'حصان', category: 'الطبيعة والحيوانات', emoji: '🐴', phonetic: '/hɔːrs/' },
+      { id: 'lion', english: 'Lion', arabic: 'أسد', category: 'الطبيعة والحيوانات', emoji: '🦁', phonetic: '/ˈlaɪən/' },
+
+      // العلاقات والحياة
+      { id: 'friend', english: 'Friend', arabic: 'صديق', category: 'علاقات ومجتمع', emoji: '🤝', phonetic: '/frɛnd/' },
+      { id: 'family', english: 'Family', arabic: 'عائلة', category: 'علاقات ومجتمع', emoji: '👨‍👩‍👧‍👦', phonetic: '/ˈfæmɪli/' },
+      { id: 'father', english: 'Father', arabic: 'أب', category: 'علاقات ومجتمع', emoji: '👨', phonetic: '/ˈfɑːðər/' },
+      { id: 'mother', english: 'Mother', arabic: 'أم', category: 'علاقات ومجتمع', emoji: '👩', phonetic: '/ˈmʌðər/' },
+      { id: 'brother', english: 'Brother', arabic: 'أخ', category: 'علاقات ومجتمع', emoji: '👦', phonetic: '/ˈbrʌðər/' },
+      { id: 'sister', english: 'Sister', arabic: 'أخت', category: 'علاقات ومجتمع', emoji: '👧', phonetic: '/ˈsɪstər/' },
+      { id: 'love', english: 'Love', arabic: 'حب', category: 'علاقات ومجتمع', emoji: '❤️', phonetic: '/lʌv/' },
+      { id: 'happy', english: 'Happy', arabic: 'سعيد', category: 'صفات شائعة', emoji: '😊', phonetic: '/ˈhæpi/' },
+      { id: 'sad', english: 'Sad', arabic: 'حزين', category: 'صفات شائعة', emoji: '😢', phonetic: '/sæd/' },
+      { id: 'big', english: 'Big', arabic: 'كبير', category: 'صفات شائعة', emoji: '🐘', phonetic: '/bɪɡ/' },
+      { id: 'small', english: 'Small', arabic: 'صغير', category: 'صفات شائعة', emoji: '🐜', phonetic: '/smɔːl/' },
+      { id: 'good', english: 'Good', arabic: 'جيد', category: 'صفات شائعة', emoji: '👍', phonetic: '/ɡʊd/' },
+
+      // الصحة والجسم
+      { id: 'heart', english: 'Heart', arabic: 'قلب', category: 'الصحة والجسم', emoji: '❤️', phonetic: '/hɑːrt/' },
+      { id: 'eye', english: 'Eye', arabic: 'عين', category: 'الصحة والجسم', emoji: '👁️', phonetic: '/aɪ/' },
+      { id: 'hand', english: 'Hand', arabic: 'يد', category: 'الصحة والجسم', emoji: '✋', phonetic: '/hænd/' },
+      { id: 'head', english: 'Head', arabic: 'رأس', category: 'الصحة والجسم', emoji: '🗣️', phonetic: '/hɛd/' },
+      { id: 'hospital', english: 'Hospital', arabic: 'مستشفى', category: 'الصحة والجسم', emoji: '🏥', phonetic: '/ˈhɒspɪtl/' },
+      { id: 'medicine', english: 'Medicine', arabic: 'دواء', category: 'الصحة والجسم', emoji: '💊', phonetic: '/ˈmɛdsən/' }
+    ];
+
+    let currentWord = WORDS[0];
+    let selectedCategory = 'الكل';
+    let speechRate = 1.0;
+    let favorites = JSON.parse(localStorage.getItem('favs') || '[]');
+    let history = JSON.parse(localStorage.getItem('hist') || JSON.stringify([WORDS[0]]));
+    let activeTab = 'favorites';
+    const categories = ['الكل', ...new Set(WORDS.map(w => w.category))];
+
+    // Preload speech synthesis voices
+    let availableVoices = [];
+    function loadVoices() {
+      if ('speechSynthesis' in window) {
+        availableVoices = window.speechSynthesis.getVoices();
+      }
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+
+    let globalAudioPlayer = null;
+
+    function animateSpeaker(btnId) {
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.add('speaking-active');
+    }
+
+    function resetSpeaker(btnId) {
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.remove('speaking-active');
+    }
+
+    // Direct online audio stream (Guaranteed to work across GitHub Pages, Android WebViews, iPhones & desktop browsers)
+    function playAudioStream(text, lang = 'en', btnId = 'englishSpeakBtn') {
+      try {
+        if (globalAudioPlayer) {
+          try {
+            globalAudioPlayer.pause();
+            globalAudioPlayer.src = '';
+          } catch(e) {}
+          globalAudioPlayer = null;
+        }
+
+        animateSpeaker(btnId);
+
+        const clean = (text || '').trim();
+        if (!clean) {
+          resetSpeaker(btnId);
+          return;
+        }
+
+        // Clean diacritics / tashkeel for safe fallback
+        const stripped = clean.replace(/[\u064B-\u065F\u0670]/g, '').trim();
+
+        const sources = [];
+
+        // 1. Try local server proxy endpoint if available (instant 200 on applet backend)
+        sources.push(`/api/tts?lang=${lang}&text=${encodeURIComponent(clean)}`);
+
+        if (lang === 'en') {
+          sources.push(`https://dict.youdao.com/dictvoice?type=0&audio=${encodeURIComponent(clean)}`);
+          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`);
+          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=gtx&q=${encodeURIComponent(clean)}`);
+        } else {
+          // Arabic audio sources (work on GitHub Pages with no-referrer policy)
+          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`);
+          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=gtx&q=${encodeURIComponent(clean)}`);
+          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(clean)}`);
+          if (stripped && stripped !== clean) {
+            sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=gtx&q=${encodeURIComponent(stripped)}`);
+            sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=dict-chrome-ex&q=${encodeURIComponent(stripped)}`);
+          }
+        }
+
+        let currentIdx = 0;
+
+        function tryNextSource() {
+          if (currentIdx >= sources.length) {
+            // As a resilient fallback, attempt ResponsiveVoice if loaded
+            if (window.responsiveVoice && typeof window.responsiveVoice.speak === 'function') {
+              try {
+                const voiceName = lang === 'ar' ? 'Arabic Female' : 'UK English Female';
+                window.responsiveVoice.speak(clean, voiceName, {
+                  rate: speechRate || 1.0,
+                  onstart: () => animateSpeaker(btnId),
+                  onend: () => resetSpeaker(btnId),
+                  onerror: () => resetSpeaker(btnId)
+                });
+                return;
+              } catch (rvErr) {
+                console.warn('ResponsiveVoice fallback error:', rvErr);
+              }
+            }
+            resetSpeaker(btnId);
+            return;
+          }
+
+          const srcUrl = sources[currentIdx++];
+          const audio = new Audio();
+          audio.referrerPolicy = 'no-referrer';
+          audio.crossOrigin = 'anonymous';
+          audio.playbackRate = speechRate || 1.0;
+          globalAudioPlayer = audio;
+
+          audio.onended = () => {
+            resetSpeaker(btnId);
+            globalAudioPlayer = null;
+          };
+
+          audio.onerror = () => {
+            tryNextSource();
+          };
+
+          const p = audio.play();
+          if (p !== undefined) {
+            p.catch(() => {
+              tryNextSource();
+            });
+          }
+        }
+
+        tryNextSource();
+      } catch (err) {
+        console.error('Audio playback error:', err);
+        resetSpeaker(btnId);
+      }
+    }
+
+    function speakCurrentEnglish(speedOverride) {
+      const text = (currentWord.english || '').trim();
+      if (!text) return;
+
+      animateSpeaker('englishSpeakBtn');
+
+      let spokenNatively = false;
+
+      // Try browser's native text-to-speech first
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.resume();
+
+          if (availableVoices.length === 0) loadVoices();
+          const enVoice = availableVoices.find(v => {
+            const l = (v.lang || '').toLowerCase();
+            return l === 'en-us' || l.startsWith('en');
+          });
+
+          if (enVoice) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = enVoice.lang || 'en-US';
+            utterance.voice = enVoice;
+            utterance.rate = speedOverride || speechRate;
+            utterance.pitch = 1.0;
+
+            utterance.onend = () => resetSpeaker('englishSpeakBtn');
+            utterance.onerror = () => {
+              playAudioStream(text, 'en', 'englishSpeakBtn');
+            };
+
+            window.speechSynthesis.speak(utterance);
+            spokenNatively = true;
+          }
+        } catch(e) {
+          spokenNatively = false;
+        }
+      }
+
+      if (!spokenNatively) {
+        playAudioStream(text, 'en', 'englishSpeakBtn');
+      }
+    }
+
+    function speakCurrentArabic() {
+      const text = (currentWord.arabic || '').trim();
+      if (!text) return;
+
+      animateSpeaker('arabicSpeakBtn');
+
+      // CRITICAL: Check if the device / browser ACTUALLY has a native Arabic voice installed.
+      // In 95% of Windows/Linux and non-Arabic Android devices, no Arabic voice is bundled.
+      // Trying to speak Arabic with an English voice causes total silence.
+      let hasNativeArabicVoice = false;
+      let arVoice = null;
+
+      if ('speechSynthesis' in window) {
+        if (availableVoices.length === 0) loadVoices();
+        arVoice = availableVoices.find(v => {
+          const l = (v.lang || '').toLowerCase();
+          return l.startsWith('ar') || l.includes('arabic');
+        });
+        if (arVoice) {
+          hasNativeArabicVoice = true;
+        }
+      }
+
+      // ONLY use speechSynthesis if a genuine Arabic voice actually exists!
+      if (hasNativeArabicVoice && arVoice) {
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.resume();
+
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = arVoice.lang || 'ar-SA';
+          utterance.voice = arVoice;
+          utterance.rate = 0.9;
+          utterance.pitch = 1.0;
+
+          utterance.onend = () => resetSpeaker('arabicSpeakBtn');
+          utterance.onerror = () => {
+            playAudioStream(text, 'ar', 'arabicSpeakBtn');
+          };
+
+          window.speechSynthesis.speak(utterance);
+          return;
+        } catch(e) {
+          console.warn('Native Arabic TTS error, falling back to audio stream:', e);
+        }
+      }
+
+      // If no native Arabic voice is installed on user's device, stream high-fidelity Arabic audio immediately
+      playAudioStream(text, 'ar', 'arabicSpeakBtn');
+    }
+
+    function cleanArabic(str) {
+      if (!str) return '';
+      return str
+        .replace(/[\u064B-\u065F\u0670]/g, '')
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .trim()
+        .toLowerCase();
+    }
+
+    function init() {
+      if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('themeIconDark').classList.remove('hidden');
+        document.getElementById('themeIconLight').classList.add('hidden');
+      }
+      renderCategories();
+      renderWords();
+      renderCard(currentWord);
+      renderTabContent();
+    }
+
+    function renderCard(word) {
+      currentWord = word;
+      document.getElementById('cardEmoji').textContent = word.emoji || '📖';
+      document.getElementById('cardCategory').textContent = word.category || 'عام';
+      document.getElementById('cardPhonetic').textContent = word.phonetic || `/${word.english.toLowerCase()}/`;
+      document.getElementById('cardEnglish').textContent = word.english;
+      document.getElementById('cardArabic').textContent = word.arabic;
+
+      const isFav = favorites.some(f => f.id === word.id);
+      const favIcon = document.getElementById('favIcon');
+      if (isFav) {
+        favIcon.setAttribute('fill', '#f59e0b');
+        favIcon.setAttribute('stroke', '#d97706');
+        favIcon.classList.add('text-amber-500');
+      } else {
+        favIcon.setAttribute('fill', 'none');
+        favIcon.setAttribute('stroke', 'currentColor');
+        favIcon.classList.remove('text-amber-500');
+      }
+
+      if (!history.some(h => h.id === word.id)) {
+        history.unshift(word);
+        if (history.length > 30) history.pop();
+        localStorage.setItem('hist', JSON.stringify(history));
+        if (activeTab === 'history') renderTabContent();
+      }
+    }
+
+    function renderCategories() {
+      const container = document.getElementById('categoriesList');
+      container.innerHTML = categories.map(cat => `
+        <button onclick="setCategory('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+          selectedCategory === cat 
+            ? 'bg-emerald-600 text-white shadow-sm' 
+            : 'bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+        }">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    function setCategory(cat) {
+      selectedCategory = cat;
+      renderCategories();
+      renderWords();
+    }
+
+    function renderWords() {
+      const rawQuery = (document.getElementById('searchInput').value || '').trim();
+      const queryLower = rawQuery.toLowerCase();
+      const queryArabic = cleanArabic(rawQuery);
+
+      let filtered = WORDS;
+      if (selectedCategory !== 'الكل') filtered = filtered.filter(w => w.category === selectedCategory);
+
+      if (rawQuery) {
+        filtered = filtered.filter(w => {
+          const matchEnglish = w.english.toLowerCase().includes(queryLower);
+          const matchArabic = cleanArabic(w.arabic).includes(queryArabic);
+          return matchEnglish || matchArabic;
+        });
+      }
+
+      document.getElementById('wordCountLabel').textContent = `${filtered.length} كلمة`;
+      const grid = document.getElementById('wordsGrid');
+      
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-8 text-center text-stone-500 dark:text-stone-400 text-sm space-y-3 bg-white dark:bg-stone-900 rounded-2xl p-6 border border-stone-200 dark:border-stone-800">
+            <p>لا توجد هذه الكلمة في القائمة الجاهزة.</p>
+            <button onclick="handleSearchEnter()" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition shadow cursor-pointer">
+              ⚡ ترجم وانطق "${rawQuery}" مباشرة
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(w => `
+        <div onclick='selectWord(${JSON.stringify(w)})' class="p-3 bg-white dark:bg-stone-900 rounded-2xl border ${
+          currentWord.id === w.id 
+            ? 'border-emerald-500 shadow-md shadow-emerald-500/10' 
+            : 'border-stone-200/80 dark:border-stone-800 hover:border-emerald-300'
+        } cursor-pointer transition text-right group">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xl">${w.emoji}</span>
+            <span class="text-[10px] text-stone-400">${w.category}</span>
+          </div>
+          <p class="font-bold text-sm text-stone-900 dark:text-white group-hover:text-emerald-600 transition dir-ltr text-right">${w.english}</p>
+          <p class="text-xs text-stone-500 dark:text-stone-400 font-medium">${w.arabic}</p>
+        </div>
+      `).join('');
+    }
+
+    function selectWord(word) {
+      renderCard(word);
+      renderWords();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      speakCurrentEnglish();
+    }
+
+    function handleSearch(val) {
+      const trimmed = val.trim();
+      document.getElementById('clearSearchBtn').classList.toggle('hidden', !trimmed);
+      const prompt = document.getElementById('liveTranslatePrompt');
+      if (trimmed.length > 0) {
+        prompt.classList.remove('hidden');
+        document.getElementById('liveTranslateBtnText').textContent = `ترجمة ونطق "${trimmed}" فورا`;
+      } else {
+        prompt.classList.add('hidden');
+      }
+      renderWords();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      document.getElementById('liveTranslatePrompt').classList.add('hidden');
+      renderWords();
+    }
+
+    async function handleSearchEnter() {
+      const term = (document.getElementById('searchInput').value || '').trim();
+      if (!term) return;
+
+      const isArabic = /[\u0600-\u06FF]/.test(term);
+      const btnText = document.getElementById('liveTranslateBtnText');
+      if (btnText) btnText.textContent = "جاري الترجمة الفورية...";
+
+      const found = WORDS.find(w => 
+        w.english.toLowerCase() === term.toLowerCase() || 
+        cleanArabic(w.arabic) === cleanArabic(term)
+      );
+
+      if (found) {
+        selectWord(found);
+        return;
+      }
+
+      try {
+        const langPair = isArabic ? 'ar|en' : 'en|ar';
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(term)}&langpair=${langPair}`);
+        const data = await res.json();
+        const translation = data?.responseData?.translatedText || (isArabic ? 'Translation' : 'ترجمة');
+
+        const newWord = {
+          id: 'custom-' + Date.now(),
+          english: isArabic ? translation : term,
+          arabic: isArabic ? term : translation,
+          category: 'بحث فوري',
+          emoji: '🌐',
+          phonetic: `/${(isArabic ? translation : term).toLowerCase()}/`
+        };
+
+        selectWord(newWord);
+      } catch (err) {
+        const fallbackWord = {
+          id: 'custom-' + Date.now(),
+          english: isArabic ? term : term,
+          arabic: isArabic ? term : term,
+          category: 'نطق فوري',
+          emoji: '🔊',
+          phonetic: `/${term.toLowerCase()}/`
+        };
+        selectWord(fallbackWord);
+      } finally {
+        if (btnText) btnText.textContent = `ترجمة ونطق "${term}" فورا`;
+      }
+    }
+
+    function randomWord() {
+      const rand = WORDS[Math.floor(Math.random() * WORDS.length)];
+      selectWord(rand);
+    }
+
+    function toggleSpeed() {
+      speechRate = speechRate === 1.0 ? 0.75 : (speechRate === 0.75 ? 1.2 : 1.0);
+      document.getElementById('speedLabel').textContent = `سرعة: ${speechRate}x`;
+    }
+
+    function toggleFavoriteCurrent() {
+      const idx = favorites.findIndex(f => f.id === currentWord.id);
+      if (idx >= 0) {
+        favorites.splice(idx, 1);
+      } else {
+        favorites.push(currentWord);
+      }
+      localStorage.setItem('favs', JSON.stringify(favorites));
+      renderCard(currentWord);
+      renderTabContent();
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      const favBtn = document.getElementById('tabFavsBtn');
+      const histBtn = document.getElementById('tabHistBtn');
+
+      if (tab === 'favorites') {
+        favBtn.className = "font-bold text-sm text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500 pb-1 cursor-pointer";
+        histBtn.className = "font-bold text-sm text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 pb-1 cursor-pointer";
+      } else {
+        histBtn.className = "font-bold text-sm text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-500 pb-1 cursor-pointer";
+        favBtn.className = "font-bold text-sm text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 pb-1 cursor-pointer";
+      }
+      renderTabContent();
+    }
+
+    function renderTabContent() {
+      document.getElementById('favCount').textContent = favorites.length;
+      const container = document.getElementById('tabContent');
+      const list = activeTab === 'favorites' ? favorites : history;
+
+      if (list.length === 0) {
+        container.innerHTML = `<span class="text-xs text-stone-400 py-2">لا توجد كلمات هنا حالياً.</span>`;
+        return;
+      }
+
+      container.innerHTML = list.map(w => `
+        <button onclick='selectWord(${JSON.stringify(w)})' class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 transition cursor-pointer">
+          <span>${w.emoji}</span>
+          <span>${w.english}</span>
+          <span class="text-stone-400 font-normal">(${w.arabic})</span>
+        </button>
+      `).join('');
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      document.getElementById('themeIconDark').classList.toggle('hidden', !isDark);
+      document.getElementById('themeIconLight').classList.toggle('hidden', isDark);
+    }
+
+    init();
+  </script>
+</body>
+</html>
