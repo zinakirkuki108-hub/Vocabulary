@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Star, Check, Copy } from 'lucide-react';
 import { WordItem } from '../data/vocabulary';
 import { speechService } from '../utils/speech';
@@ -20,6 +20,12 @@ export const WordCard: React.FC<WordCardProps> = ({
   const [isSpeakingEn, setIsSpeakingEn] = useState(false);
   const [isSpeakingAr, setIsSpeakingAr] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Preload audio files immediately for zero-delay speech on click
+  useEffect(() => {
+    if (word.english) speechService.preload(word.english, 'en');
+    if (word.arabic) speechService.preload(word.arabic, 'ar');
+  }, [word]);
 
   const speakEnglish = (e?: React.MouseEvent) => {
     e?.stopPropagation();

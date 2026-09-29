@@ -31,8 +31,27 @@ class SpeechService {
     return true;
   }
 
+  private audioCache = new Map<string, HTMLAudioElement>();
+
+  public preload(text: string, lang: 'en' | 'ar' = 'en') {
+    const clean = (text || '').trim();
+    if (!clean) return;
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`;
+    if (!this.audioCache.has(url)) {
+      try {
+        const audio = new Audio();
+        try {
+          (audio as unknown as { referrerPolicy: string }).referrerPolicy = 'no-referrer';
+        } catch (e) {}
+        audio.preload = 'auto';
+        audio.src = url;
+        this.audioCache.set(url, audio);
+      } catch (e) {}
+    }
+  }
+
   /**
-   * Fallback online audio streaming when native TTS has no voice (common for Arabic on Windows/Android)
+   * Fast, low-latency online audio streaming with instant preloaded cache
    */
   private playStreamFallback(
     text: string,
@@ -46,70 +65,76 @@ class SpeechService {
       this.stop();
 
       const clean = text.trim();
-      const stripped = clean.replace(/[\u064B-\u065F\u0670]/g, '').trim();
+      const primaryUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`;
+      const backupUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=gtx&q=${encodeURIComponent(clean)}`;
 
-      const sources: string[] = [];
-
-      // 1. Try server proxy endpoint
-      sources.push(`/api/tts?lang=${lang}&text=${encodeURIComponent(clean)}`);
-
-      if (lang === 'en') {
-        sources.push(`https://dict.youdao.com/dictvoice?type=0&audio=${encodeURIComponent(clean)}`);
-        sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`);
-        sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=gtx&q=${encodeURIComponent(clean)}`);
-      } else {
-        // Arabic audio sources
-        sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`);
-        sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=gtx&q=${encodeURIComponent(clean)}`);
-        sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(clean)}`);
-        if (stripped && stripped !== clean) {
-          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=gtx&q=${encodeURIComponent(stripped)}`);
-        }
-      }
-
-      let index = 0;
-      let started = false;
-
-      const tryNext = () => {
-        if (index >= sources.length) {
-          if (onEnd) onEnd();
-          if (onError) onError(new Error('All audio streams failed'));
-          return;
-        }
-
-        const url = sources[index++];
-        const audio = new Audio();
+      let audio = this.audioCache.get(primaryUrl);
+      if (!audio) {
+        audio = new Audio();
         try {
           (audio as unknown as { referrerPolicy: string }).referrerPolicy = 'no-referrer';
         } catch (e) {}
+        audio.preload = 'auto';
+        audio.src = primaryUrl;
+        this.audioCache.set(primaryUrl, audio);
+      }
+
+      try {
+        audio.currentTime = 0;
         audio.playbackRate = Math.max(0.5, Math.min(rate, 1.5));
-        this.activeAudio = audio;
+      } catch (e) {}
+      this.activeAudio = audio;
 
-        audio.onplay = () => {
-          if (!started) {
-            started = true;
-            if (onStart) onStart();
-          }
-        };
-
-        audio.onended = () => {
-          this.activeAudio = null;
-          if (onEnd) onEnd();
-        };
-
-        audio.onerror = () => {
-          tryNext();
-        };
-
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            tryNext();
-          });
+      let started = false;
+      audio.onplay = () => {
+        if (!started) {
+          started = true;
+          if (onStart) onStart();
         }
       };
 
-      tryNext();
+      audio.onended = () => {
+        this.activeAudio = null;
+        if (onEnd) onEnd();
+      };
+
+      audio.onerror = () => {
+        // Instant backup stream
+        const backupAudio = new Audio();
+        try {
+          (backupAudio as unknown as { referrerPolicy: string }).referrerPolicy = 'no-referrer';
+        } catch (e) {}
+        backupAudio.src = backupUrl;
+        try {
+          backupAudio.playbackRate = Math.max(0.5, Math.min(rate, 1.5));
+        } catch (e) {}
+        this.activeAudio = backupAudio;
+
+        backupAudio.onended = () => {
+          this.activeAudio = null;
+          if (onEnd) onEnd();
+        };
+        backupAudio.onerror = (err) => {
+          this.activeAudio = null;
+          if (onEnd) onEnd();
+          if (onError) onError(err);
+        };
+
+        backupAudio.play().catch((err) => {
+          this.activeAudio = null;
+          if (onEnd) onEnd();
+          if (onError) onError(err);
+        });
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          if (audio && audio.onerror) {
+            audio.onerror(new Event('error') as unknown as string);
+          }
+        });
+      }
     } catch (e) {
       if (onEnd) onEnd();
       if (onError) onError(e);
@@ -157,7 +182,6 @@ class SpeechService {
 
     try {
       this.synth.cancel();
-      this.synth.resume();
 
       const utterance = new SpeechSynthesisUtterance(clean);
       utterance.rate = Math.max(0.5, Math.min(rate, 1.5));

@@ -7,9 +7,6 @@
   <title>مفرداتي - قاموس الكلمات السريع والناطق</title>
   <meta name="description" content="قاموس شامل وسريع للبحث الفوري عن أي كلمة باللغة الإنجليزية أو العربية مع النطق الصوتي المباشر.">
   
-  <!-- ResponsiveVoice as resilient multi-platform speech backup -->
-  <script src="https://code.responsivevoice.org/responsivevoice.js"></script>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -339,6 +336,7 @@
     }
 
     let globalAudioPlayer = null;
+    const audioPreloadCache = new Map();
 
     function animateSpeaker(btnId) {
       const btn = document.getElementById(btnId);
@@ -350,99 +348,94 @@
       if (btn) btn.classList.remove('speaking-active');
     }
 
-    // Direct online audio stream (Guaranteed to work across GitHub Pages, Android WebViews, iPhones & desktop browsers)
-    function playAudioStream(text, lang = 'en', btnId = 'englishSpeakBtn') {
-      try {
-        if (globalAudioPlayer) {
-          try {
-            globalAudioPlayer.pause();
-            globalAudioPlayer.src = '';
-          } catch(e) {}
-          globalAudioPlayer = null;
-        }
+    // Preload audio files as soon as words are viewed for instantaneous (<20ms) response
+    function preloadWordAudio(text, lang) {
+      if (!text) return;
+      const clean = text.trim();
+      if (!clean) return;
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`;
+      if (!audioPreloadCache.has(url)) {
+        try {
+          const a = new Audio();
+          a.referrerPolicy = 'no-referrer';
+          a.preload = 'auto';
+          a.src = url;
+          audioPreloadCache.set(url, a);
+        } catch(e) {}
+      }
+    }
 
-        animateSpeaker(btnId);
-
-        const clean = (text || '').trim();
-        if (!clean) {
-          resetSpeaker(btnId);
-          return;
-        }
-
-        // Clean diacritics / tashkeel for safe fallback
-        const stripped = clean.replace(/[\u064B-\u065F\u0670]/g, '').trim();
-
-        const sources = [];
-
-        // 1. Try local server proxy endpoint if available (instant 200 on applet backend)
-        sources.push(`/api/tts?lang=${lang}&text=${encodeURIComponent(clean)}`);
-
-        if (lang === 'en') {
-          sources.push(`https://dict.youdao.com/dictvoice?type=0&audio=${encodeURIComponent(clean)}`);
-          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`);
-          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=gtx&q=${encodeURIComponent(clean)}`);
-        } else {
-          // Arabic audio sources (work on GitHub Pages with no-referrer policy)
-          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`);
-          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=gtx&q=${encodeURIComponent(clean)}`);
-          sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(clean)}`);
-          if (stripped && stripped !== clean) {
-            sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=gtx&q=${encodeURIComponent(stripped)}`);
-            sources.push(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=dict-chrome-ex&q=${encodeURIComponent(stripped)}`);
-          }
-        }
-
-        let currentIdx = 0;
-
-        function tryNextSource() {
-          if (currentIdx >= sources.length) {
-            // As a resilient fallback, attempt ResponsiveVoice if loaded
-            if (window.responsiveVoice && typeof window.responsiveVoice.speak === 'function') {
-              try {
-                const voiceName = lang === 'ar' ? 'Arabic Female' : 'UK English Female';
-                window.responsiveVoice.speak(clean, voiceName, {
-                  rate: speechRate || 1.0,
-                  onstart: () => animateSpeaker(btnId),
-                  onend: () => resetSpeaker(btnId),
-                  onerror: () => resetSpeaker(btnId)
-                });
-                return;
-              } catch (rvErr) {
-                console.warn('ResponsiveVoice fallback error:', rvErr);
-              }
-            }
-            resetSpeaker(btnId);
-            return;
-          }
-
-          const srcUrl = sources[currentIdx++];
-          const audio = new Audio();
-          audio.referrerPolicy = 'no-referrer';
-          audio.crossOrigin = 'anonymous';
-          audio.playbackRate = speechRate || 1.0;
-          globalAudioPlayer = audio;
-
-          audio.onended = () => {
-            resetSpeaker(btnId);
-            globalAudioPlayer = null;
-          };
-
-          audio.onerror = () => {
-            tryNextSource();
-          };
-
-          const p = audio.play();
-          if (p !== undefined) {
-            p.catch(() => {
-              tryNextSource();
-            });
-          }
-        }
-
-        tryNextSource();
-      } catch (err) {
-        console.error('Audio playback error:', err);
+    // Instant zero-lag audio player using Google's Edge CDN with preload cache
+    function playFastAudio(text, lang = 'en', btnId = 'englishSpeakBtn') {
+      const clean = (text || '').trim();
+      if (!clean) {
         resetSpeaker(btnId);
+        return;
+      }
+
+      animateSpeaker(btnId);
+
+      // Stop any existing sound immediately
+      if (globalAudioPlayer) {
+        try {
+          globalAudioPlayer.pause();
+          globalAudioPlayer.currentTime = 0;
+        } catch(e) {}
+        globalAudioPlayer = null;
+      }
+
+      const primaryUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=dict-chrome-ex&q=${encodeURIComponent(clean)}`;
+      const backupUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=gtx&q=${encodeURIComponent(clean)}`;
+
+      let audio = audioPreloadCache.get(primaryUrl);
+      if (!audio) {
+        audio = new Audio();
+        audio.referrerPolicy = 'no-referrer';
+        audio.preload = 'auto';
+        audio.src = primaryUrl;
+        audioPreloadCache.set(primaryUrl, audio);
+      }
+
+      try {
+        audio.currentTime = 0;
+        audio.playbackRate = speechRate || 1.0;
+      } catch(e) {}
+      
+      globalAudioPlayer = audio;
+
+      audio.onended = () => {
+        resetSpeaker(btnId);
+        globalAudioPlayer = null;
+      };
+
+      audio.onerror = () => {
+        // Instant backup stream if primary fails
+        const backupAudio = new Audio();
+        backupAudio.referrerPolicy = 'no-referrer';
+        backupAudio.src = backupUrl;
+        try {
+          backupAudio.playbackRate = speechRate || 1.0;
+        } catch(e) {}
+        globalAudioPlayer = backupAudio;
+
+        backupAudio.onended = () => {
+          resetSpeaker(btnId);
+          globalAudioPlayer = null;
+        };
+        backupAudio.onerror = () => {
+          resetSpeaker(btnId);
+          globalAudioPlayer = null;
+        };
+
+        backupAudio.play().catch(() => resetSpeaker(btnId));
+      };
+
+      const p = audio.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          // If browser blocked or failed, trigger backup
+          if (audio.onerror) audio.onerror(new Event('error'));
+        });
       }
     }
 
@@ -452,13 +445,10 @@
 
       animateSpeaker('englishSpeakBtn');
 
-      let spokenNatively = false;
-
-      // Try browser's native text-to-speech first
+      // Native speech synthesis (instant on-device)
       if ('speechSynthesis' in window) {
         try {
           window.speechSynthesis.cancel();
-          window.speechSynthesis.resume();
 
           if (availableVoices.length === 0) loadVoices();
           const enVoice = availableVoices.find(v => {
@@ -470,25 +460,23 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = enVoice.lang || 'en-US';
             utterance.voice = enVoice;
-            utterance.rate = speedOverride || speechRate;
+            utterance.rate = speedOverride || speechRate || 1.0;
             utterance.pitch = 1.0;
 
             utterance.onend = () => resetSpeaker('englishSpeakBtn');
             utterance.onerror = () => {
-              playAudioStream(text, 'en', 'englishSpeakBtn');
+              playFastAudio(text, 'en', 'englishSpeakBtn');
             };
 
             window.speechSynthesis.speak(utterance);
-            spokenNatively = true;
+            return;
           }
         } catch(e) {
-          spokenNatively = false;
+          console.warn('Native speech failed:', e);
         }
       }
 
-      if (!spokenNatively) {
-        playAudioStream(text, 'en', 'englishSpeakBtn');
-      }
+      playFastAudio(text, 'en', 'englishSpeakBtn');
     }
 
     function speakCurrentArabic() {
@@ -497,49 +485,39 @@
 
       animateSpeaker('arabicSpeakBtn');
 
-      // CRITICAL: Check if the device / browser ACTUALLY has a native Arabic voice installed.
-      // In 95% of Windows/Linux and non-Arabic Android devices, no Arabic voice is bundled.
-      // Trying to speak Arabic with an English voice causes total silence.
-      let hasNativeArabicVoice = false;
+      // Check if browser has a native Arabic voice installed
       let arVoice = null;
-
       if ('speechSynthesis' in window) {
         if (availableVoices.length === 0) loadVoices();
         arVoice = availableVoices.find(v => {
           const l = (v.lang || '').toLowerCase();
           return l.startsWith('ar') || l.includes('arabic');
         });
-        if (arVoice) {
-          hasNativeArabicVoice = true;
-        }
       }
 
-      // ONLY use speechSynthesis if a genuine Arabic voice actually exists!
-      if (hasNativeArabicVoice && arVoice) {
+      if (arVoice) {
         try {
           window.speechSynthesis.cancel();
-          window.speechSynthesis.resume();
-
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = arVoice.lang || 'ar-SA';
           utterance.voice = arVoice;
-          utterance.rate = 0.9;
+          utterance.rate = 0.95;
           utterance.pitch = 1.0;
 
           utterance.onend = () => resetSpeaker('arabicSpeakBtn');
           utterance.onerror = () => {
-            playAudioStream(text, 'ar', 'arabicSpeakBtn');
+            playFastAudio(text, 'ar', 'arabicSpeakBtn');
           };
 
           window.speechSynthesis.speak(utterance);
           return;
         } catch(e) {
-          console.warn('Native Arabic TTS error, falling back to audio stream:', e);
+          console.warn('Native Arabic TTS error:', e);
         }
       }
 
-      // If no native Arabic voice is installed on user's device, stream high-fidelity Arabic audio immediately
-      playAudioStream(text, 'ar', 'arabicSpeakBtn');
+      // Fast streaming audio (preloaded)
+      playFastAudio(text, 'ar', 'arabicSpeakBtn');
     }
 
     function cleanArabic(str) {
@@ -572,6 +550,10 @@
       document.getElementById('cardPhonetic').textContent = word.phonetic || `/${word.english.toLowerCase()}/`;
       document.getElementById('cardEnglish').textContent = word.english;
       document.getElementById('cardArabic').textContent = word.arabic;
+
+      // Preload audio immediately into browser cache for instantaneous pronunciation
+      if (word.english) preloadWordAudio(word.english, 'en');
+      if (word.arabic) preloadWordAudio(word.arabic, 'ar');
 
       const isFav = favorites.some(f => f.id === word.id);
       const favIcon = document.getElementById('favIcon');
